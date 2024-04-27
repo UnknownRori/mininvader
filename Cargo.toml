@@ -1,0 +1,36 @@
+[package]
+name = "mininvaders"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+nursery = "deny"
+module_name_repetitions = "allow"
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+# opt-level = 1
+incremental = true
+
+# Enable high optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+
+[dependencies]
+hecs = "0.10.4"
+macroquad = "0.4.5"
+macroquad-profiler = "0.2.0"
+num-complex = "0.4.5"
