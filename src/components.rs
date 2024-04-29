@@ -43,7 +43,7 @@ impl Sprite {
     pub fn new_from_index(x: u32, y: u32) -> Self {
         Self(Rect::new(
             (x * Self::WIDTH) as f32,
-            (y * Self::HEIGHT) as f32 - 0.8, // INFO : There is issue if there is no padding
+            (y * Self::HEIGHT) as f32,
             Self::WIDTH as f32,
             Self::HEIGHT as f32,
         ))
