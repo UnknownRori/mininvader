@@ -8,6 +8,7 @@ use crate::utils::rand_dir;
 use crate::vec2;
 use crate::Action;
 use crate::Controls;
+use hecs::Entity;
 use hecs::World;
 use macroquad::prelude::*;
 use num_complex::Complex;
@@ -45,13 +46,7 @@ pub fn draw_text_system(world: &World, resources: &Resources, renderer: &Rendere
         .for_each(|(_, (text, transform))| renderer.draw_text(&text.0, &resources.font, transform))
 }
 
-pub fn update_cooldown(world: &World) {
-    world
-        .query::<&mut Cooldown>()
-        .without::<&Player>()
-        .iter()
-        .for_each(|(_, cooldown)| cooldown.0.update());
-}
+pub fn update_cooldown(world: &World) {}
 
 pub fn player_controls(world: &mut World, controls: &Controls) {
     let mut pending = Vec::new();
@@ -202,72 +197,102 @@ pub fn fire_bullets(world: &mut World) {
     let pending = world
         .query::<(&AttackMove, &Cooldown, &Transform2D)>()
         .iter()
-        .filter(|(_, (_, cooldown, _))| cooldown.0.completed())
-        .map(|(id, (attack, _, transform))| (id.clone(), attack.clone(), transform.clone()))
+        .map(|(id, (attack, timer, transform))| {
+            (
+                id.clone(),
+                attack.clone(),
+                transform.clone(),
+                timer.0.completed(),
+            )
+        })
         .collect::<Vec<_>>();
 
     if let Some(player) = player.first() {
         for attack_move in pending {
-            match attack_move.1 {
-                AttackMove::AtPlayer {
-                    num,
-                    speed,
-                    spread,
-                    total_shoot,
-                    setup,
-                    ..
-                } => {
-                    if total_shoot <= 0 {
-                        return;
-                    }
-
-                    {
-                        let mut total_shoot_ref =
-                            world.get::<&mut AttackMove>(attack_move.0).unwrap();
-                        if let AttackMove::AtPlayer { total_shoot, .. } = &mut *total_shoot_ref {
-                            *total_shoot -= 1;
-                        }
-                    }
-                    if num > 1 {
-                        for i in 0..num as i32 {
-                            let angle = (i - 1) as f32 * spread;
-                            let dir = attack_move.2.position.dir(player.position())
-                                * Complex::cdir(angle)
-                                * speed
-                                + (rand_dir() * 0.02).to_cmpx();
-                            let move_params = MoveParams::move_linear(dir);
-                            let transform = Transform2D {
-                                rotation: dir.rot(),
-                                scale: vec2!(0.05),
-                                ..attack_move.2
-                            };
-                            create_enemy_bullet(
-                                world,
-                                transform,
-                                setup.0.clone(),
-                                move_params,
-                                Hitbox::new(0.01),
-                            );
-                        }
-                        return;
-                    }
-
-                    let dir = attack_move.2.position.dir(player.position()) * speed;
-                    let move_params = MoveParams::move_linear(dir);
-                    let transform = Transform2D {
-                        scale: vec2!(0.05),
-                        rotation: dir.rot(),
-                        ..attack_move.2
-                    };
-                    create_enemy_bullet(world, transform, setup.0, move_params, Hitbox::new(0.01));
-                }
-                AttackMove::Multiple(_) => {
-                    // TODO : Implement this later
-                }
+            world
+                .get::<&mut Cooldown>(attack_move.0)
+                .unwrap()
+                .0
+                .update();
+            if !attack_move.3 {
+                continue;
             }
+
+            handle_fire_bullet(
+                world,
+                &attack_move.0,
+                &attack_move.1,
+                &attack_move.2,
+                player,
+            );
         }
     }
 }
+
+fn handle_fire_bullet(
+    world: &mut World,
+    id: &Entity,
+    attack_move: &AttackMove,
+    transform: &Transform2D,
+    player: &Transform2D,
+) {
+    match attack_move {
+        AttackMove::AtPlayer {
+            num,
+            speed,
+            spread,
+            total_shoot,
+            setup,
+            ..
+        } => {
+            if *total_shoot <= 0 {
+                return;
+            }
+
+            {
+                let mut total_shoot_ref = world.get::<&mut AttackMove>(*id).unwrap();
+                if let AttackMove::AtPlayer { total_shoot, .. } = &mut *total_shoot_ref {
+                    *total_shoot -= 1;
+                }
+            }
+            if *num > 1 {
+                for i in 0..*num as i32 {
+                    let angle = (i - 1) as f32 * spread;
+                    let dir =
+                        transform.position.dir(player.position()) * Complex::cdir(angle) * speed
+                            + (rand_dir() * 0.005).to_cmpx();
+                    let move_params = MoveParams::move_linear(dir);
+                    let transform = Transform2D {
+                        rotation: dir.rot(),
+                        scale: vec2!(0.05),
+                        ..*transform
+                    };
+                    create_enemy_bullet(
+                        world,
+                        transform,
+                        setup.0.clone(),
+                        move_params,
+                        Hitbox::new(0.01),
+                    );
+                }
+                return;
+            }
+
+            let dir = transform.position.dir(player.position()) * speed;
+            let move_params = MoveParams::move_linear(dir);
+            let transform = Transform2D {
+                scale: vec2!(0.05),
+                rotation: dir.rot(),
+                ..*transform
+            };
+            create_enemy_bullet(world, transform, setup.0, move_params, Hitbox::new(0.01));
+        }
+        AttackMove::Multiple(_) => {
+            // TODO : Implement this later
+        }
+    }
+}
+
 pub fn scan_been_onscreen(world: &mut World) {
     let pending = world
         .query::<(&Transform2D, &DieOffScreen, Option<&BeenOnScreen>)>()

@@ -61,12 +61,11 @@ impl Game {
 
         self.fps.update();
         self.spawner.update(&mut self.world, delta);
-        update_cooldown(&self.world);
         player_controls(&mut self.world, &self.controls);
         update_moves(&self.world);
         update_movement(&self.world);
-        collision(&mut self.world);
         fire_bullets(&mut self.world);
+        collision(&mut self.world);
         scan_been_onscreen(&mut self.world);
         clean_offscreen(&mut self.world);
     }

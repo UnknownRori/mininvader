@@ -30,7 +30,7 @@ pub struct HealthBar(pub Rect);
 pub struct ParallaxBackground(pub Sprite);
 
 // It uses [`Resources`] sprite
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Sprite(pub Rect);
 
 impl Sprite {

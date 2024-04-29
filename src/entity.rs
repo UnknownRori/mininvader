@@ -187,7 +187,7 @@ pub fn create_player(world: &mut World) {
         Transform2D::new(offset, vec2!(0.1), 0.),
         MoveParams::move_dampen(cmpx!(0.), 0.85),
         Cooldown(Timer::new(0.1, true)),
-        Hitbox::new(0.028),
+        Hitbox::new(0.015),
     ));
 }
 
