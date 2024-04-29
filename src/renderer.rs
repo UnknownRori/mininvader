@@ -63,6 +63,12 @@ impl Renderer {
         set_default_camera();
     }
 
+    pub fn draw_hp_bar(&self, current: f32, max: f32, pos: Rect) {
+        set_camera(&self.game);
+        draw_rectangle(pos.x, pos.y, pos.w * (current / max), pos.h, RED);
+        set_default_camera();
+    }
+
     pub fn debug_draw_hitbox(&self, pos: &Transform2D, radius: f32) {
         set_camera(&self.game);
         draw_circle(
@@ -105,7 +111,7 @@ impl Renderer {
             },
         );
 
-        fps.draw(&resources.font, vec2!(width, 24.), 24.);
+        fps.draw(&resources.font, vec2!(width, height - 14.), 14.);
         set_default_camera();
     }
 }

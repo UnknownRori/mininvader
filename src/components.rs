@@ -23,6 +23,8 @@ impl Cooldown {
     }
 }
 
+pub struct HealthBar(pub Rect);
+
 // It uses [`Resources`] sprite
 #[derive(Debug)]
 pub struct ParallaxBackground(pub Sprite);

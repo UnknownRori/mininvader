@@ -73,14 +73,20 @@ impl Game {
 
     pub fn render(&self) {
         self.renderer.init();
-        draw_sprites_system(&self.world, &self.resources, &self.renderer);
-        draw_text_system(&self.world, &self.resources, &self.renderer);
-        draw_hitbox_system(&self.world, &self.renderer);
-        self.renderer.finalize(&self.fps, &self.resources);
+        let world = &self.world;
+        let renderer = &self.renderer;
+        let fps = &self.fps;
+        let resources = &self.resources;
 
-        macroquad_profiler::profiler(macroquad_profiler::ProfilerParams {
-            fps_counter_pos: vec2!(0., 0.),
-        });
+        draw_sprites_system(world, resources, renderer);
+        draw_text_system(world, resources, renderer);
+        // draw_hitbox_system(world, renderer);
+        draw_boss_hitpoint(world, renderer);
+        self.renderer.finalize(fps, resources);
+
+        // macroquad_profiler::profiler(macroquad_profiler::ProfilerParams {
+        //     fps_counter_pos: vec2!(0., 0.),
+        // });
     }
 
     pub async fn run(&mut self) {

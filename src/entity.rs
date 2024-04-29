@@ -45,6 +45,7 @@ pub fn create_boss(
         moves,
         hitpoint,
         cooldown,
+        HealthBar(Rect::new(0.04, 0.02, 0.9, 0.01)),
     ));
 }
 

@@ -12,6 +12,15 @@ use hecs::World;
 use macroquad::prelude::*;
 use num_complex::Complex;
 
+pub fn draw_boss_hitpoint(world: &World, renderer: &Renderer) {
+    world
+        .query::<(&Boss, &Hitpoint, &HealthBar)>()
+        .iter()
+        .for_each(|(_, (_, hp, healthbar))| {
+            renderer.draw_hp_bar(hp.hp, hp.max_hp, healthbar.0);
+        });
+}
+
 pub fn draw_hitbox_system(world: &World, renderer: &Renderer) {
     world
         .query::<(&Hitbox, &Transform2D)>()
