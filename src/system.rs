@@ -287,9 +287,9 @@ fn handle_fire_bullet(
             };
             create_enemy_bullet(world, transform, setup.0, move_params, Hitbox::new(0.01));
         }
-        AttackMove::Multiple(_) => {
-            // TODO : Implement this later
-        }
+        AttackMove::Multiple(moves) => moves
+            .iter()
+            .for_each(|attack_move| handle_fire_bullet(world, id, attack_move, transform, player)),
     }
 }
 
