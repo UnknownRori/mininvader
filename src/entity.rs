@@ -67,10 +67,10 @@ pub fn create_red_alien_wait(transform: Complex<f32>) -> impl FnOnce(&mut World)
                 speed: 0.5,
                 total_shoot: 1,
                 setup: BulletSetup(Sprite::new_from_index(0, 1)),
+                cooldown: Cooldown::new(1.),
             },
             Hitbox::new(0.03),
             Hitpoint::new(2.),
-            Cooldown::new(1.),
         );
     }
 }
@@ -92,10 +92,10 @@ pub fn create_red_alien(transform: Complex<f32>) -> impl FnOnce(&mut World) {
                 speed: 0.5,
                 total_shoot: 1,
                 setup: BulletSetup(Sprite::new_from_index(1, 1)),
+                cooldown: Cooldown::new(1.),
             },
             Hitbox::new(0.03),
             Hitpoint::new(2.),
-            Cooldown::new(1.),
         );
     }
 }
@@ -109,7 +109,6 @@ pub fn create_enemy(
     attack_move: AttackMove,
     hitbox: Hitbox,
     hitpoint: Hitpoint,
-    cooldown: Cooldown,
 ) {
     world.spawn((
         Enemy,
@@ -121,7 +120,6 @@ pub fn create_enemy(
         attack_move,
         moves,
         hitpoint,
-        cooldown,
     ));
 }
 

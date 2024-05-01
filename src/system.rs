@@ -46,8 +46,6 @@ pub fn draw_text_system(world: &World, resources: &Resources, renderer: &Rendere
         .for_each(|(_, (text, transform))| renderer.draw_text(&text.0, &resources.font, transform))
 }
 
-pub fn update_cooldown(world: &World) {}
-
 pub fn player_controls(world: &mut World, controls: &Controls) {
     let mut pending = Vec::new();
 
@@ -195,29 +193,13 @@ pub fn fire_bullets(world: &mut World) {
         .collect::<Vec<_>>();
 
     let pending = world
-        .query::<(&AttackMove, &Cooldown, &Transform2D)>()
+        .query::<(&AttackMove, &Transform2D)>()
         .iter()
-        .map(|(id, (attack, timer, transform))| {
-            (
-                id.clone(),
-                attack.clone(),
-                transform.clone(),
-                timer.0.completed(),
-            )
-        })
+        .map(|(id, (attack, transform))| (id.clone(), attack.clone(), transform.clone()))
         .collect::<Vec<_>>();
 
     if let Some(player) = player.first() {
         for attack_move in pending {
-            world
-                .get::<&mut Cooldown>(attack_move.0)
-                .unwrap()
-                .0
-                .update();
-            if !attack_move.3 {
-                continue;
-            }
-
             handle_fire_bullet(
                 world,
                 &attack_move.0,
@@ -225,8 +207,25 @@ pub fn fire_bullets(world: &mut World) {
                 &attack_move.2,
                 player,
             );
+
+            update_cooldown_attack_world(&attack_move.0, world);
         }
     }
+}
+
+fn update_cooldown_attack_world(id: &Entity, world: &World) {
+    let mut attack_move = world.get::<&mut AttackMove>(*id).unwrap();
+    update_cooldown_attack(&mut *attack_move)
+}
+
+fn update_cooldown_attack(attack: &mut AttackMove) {
+    match attack {
+        AttackMove::AtPlayer { cooldown, .. } => cooldown.0.update(),
+        AttackMove::Circle { cooldown, .. } => cooldown.0.update(),
+        AttackMove::Multiple(attacks) => attacks
+            .iter_mut()
+            .for_each(|attack| update_cooldown_attack(attack)),
+    };
 }
 
 fn handle_fire_bullet(
@@ -242,9 +241,9 @@ fn handle_fire_bullet(
             speed,
             spread,
             total_shoot,
+            cooldown,
             setup,
-            ..
-        } => {
+        } if cooldown.0.completed() => {
             if *total_shoot <= 0 {
                 return;
             }
@@ -290,6 +289,15 @@ fn handle_fire_bullet(
         AttackMove::Multiple(moves) => moves
             .iter()
             .for_each(|attack_move| handle_fire_bullet(world, id, attack_move, transform, player)),
+        AttackMove::Circle {
+            sides,
+            rotation_per_fire,
+            rotation,
+            cooldown,
+            setup,
+        } if cooldown.0.completed() => todo!(),
+
+        AttackMove::AtPlayer { .. } | AttackMove::Circle { .. } => {}
     }
 }
 
