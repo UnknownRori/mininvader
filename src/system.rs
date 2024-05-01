@@ -295,7 +295,21 @@ fn handle_fire_bullet(
             rotation,
             cooldown,
             setup,
-        } if cooldown.0.completed() => todo!(),
+        } if cooldown.0.completed() => {
+            for side in 0..*sides {
+                let rotation =
+                    (side as f32 / *sides as f32) * std::f32::consts::PI * 2. + *rotation;
+                let dir = Complex::cdir(rotation);
+                let move_params = MoveParams::move_linear(dir);
+
+                let transform = Transform2D {
+                    scale: vec2!(0.05),
+                    rotation: dir.rot(),
+                    ..*transform
+                };
+                create_enemy_bullet(world, transform, setup.0, move_params, Hitbox::new(0.01));
+            }
+        }
 
         AttackMove::AtPlayer { .. } | AttackMove::Circle { .. } => {}
     }
