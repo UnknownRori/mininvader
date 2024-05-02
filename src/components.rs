@@ -125,12 +125,39 @@ impl Moves {
 pub struct BulletSetup(pub Sprite);
 
 #[derive(Debug, Clone)]
+pub struct BossMove {
+    pub timeout: Timer,
+    pub hp: f32,
+    pub attack: AttackMove,
+}
+
+impl BossMove {
+    pub fn new(timeout: f32, hp: f32, attack: AttackMove) -> Self {
+        Self {
+            timeout: Timer::new(timeout, false),
+            hp,
+            attack,
+        }
+    }
+}
+
+pub struct BossAttack(Vec<BossMove>);
+
+#[derive(Debug, Clone)]
 pub enum AttackMove {
     AtPlayer {
         num: u16,
         speed: f32,
         spread: f32,
         total_shoot: u16,
+        cooldown: Cooldown,
+        setup: BulletSetup,
+    },
+    Circle {
+        sides: u16,
+        rotation_per_fire: f32,
+        rotation: f32,
+        cooldown: Cooldown,
         setup: BulletSetup,
     },
     Multiple(Vec<AttackMove>),
