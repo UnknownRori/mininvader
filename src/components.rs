@@ -141,7 +141,14 @@ impl BossMove {
     }
 }
 
-pub struct BossAttack(Vec<BossMove>);
+#[derive(Debug, Clone)]
+pub struct BossMoves(pub VecDeque<BossMove>);
+
+impl BossMoves {
+    pub fn new(moves: impl Into<VecDeque<BossMove>>) -> Self {
+        Self(moves.into())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum AttackMove {
@@ -410,6 +417,14 @@ impl Hitpoint {
             hp,
             max_hp: hp,
             invulnerable: false,
+        }
+    }
+
+    pub fn invulnerable() -> Self {
+        Self {
+            hp: 1.,
+            max_hp: 1.,
+            invulnerable: true,
         }
     }
 

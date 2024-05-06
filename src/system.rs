@@ -120,6 +120,15 @@ pub fn update_movement(world: &World) {
             move_params.update(&mut transform.position, get_frame_time());
         });
 }
+
+pub fn update_boss_move(world: &mut World) {
+    for (id, (_, _, boss)) in world.query::<(&Boss, &Enemy, &mut BossMoves)>().iter() {
+        if let Some(attack) = boss.0.front() {
+            //
+        }
+    }
+}
+
 pub fn collision(world: &mut World) {
     let players = world
         .query::<(&Player, &Controllable, &Transform2D, &Hitbox)>()
@@ -130,6 +139,7 @@ pub fn collision(world: &mut World) {
     let enemies = world
         .query::<(&Enemy, &Transform2D, &Hitbox)>()
         .without::<&Bullet>()
+        .without::<&Boss>()
         .iter()
         .map(|(id, (_, transform, hitbox))| (id.clone(), transform.clone(), hitbox.clone()))
         .collect::<Vec<_>>();
@@ -170,7 +180,12 @@ pub fn collision(world: &mut World) {
                     let _ = world.despawn(player_bullet.0);
 
                     // TODO : Make the damage based on bullet type
-                    world.get::<&mut Hitpoint>(enemy.0).unwrap().damage(0.5);
+                    match world.satisfies::<&Hitpoint>(enemy.0) {
+                        Ok(exist) if exist => {
+                            world.get::<&mut Hitpoint>(enemy.0).unwrap().damage(0.5);
+                        }
+                        _ => {}
+                    };
 
                     let despawn = match world.get::<&Hitpoint>(enemy.0) {
                         Ok(hitpoint) if hitpoint.is_dead() => true,

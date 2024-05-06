@@ -15,25 +15,43 @@ pub fn create_boss_1() -> impl FnOnce(&mut World) {
             Sprite::new_from_index(2, 0),
             MoveParams::move_linear(cmpx!(0., 0.1)),
             Moves::new(vec![]),
-            AttackMove::Multiple(vec![
-                AttackMove::AtPlayer {
-                    num: 5,
-                    speed: 0.5,
-                    spread: 20.,
-                    total_shoot: 2,
-                    cooldown: Cooldown::new(1.),
-                    setup: BulletSetup(Sprite::new_from_index(0, 1)),
-                },
-                AttackMove::Circle {
-                    sides: 16,
-                    rotation: 12.,
-                    rotation_per_fire: 6.,
-                    setup: BulletSetup(Sprite::new_from_index(0, 1)),
-                    cooldown: Cooldown::new(1.),
-                },
+            BossMoves::new(vec![
+                BossMove::new(
+                    12.,
+                    12.,
+                    AttackMove::Multiple(vec![
+                        AttackMove::AtPlayer {
+                            num: 5,
+                            speed: 0.5,
+                            spread: 20.,
+                            total_shoot: 2,
+                            cooldown: Cooldown::new(1.),
+                            setup: BulletSetup(Sprite::new_from_index(0, 1)),
+                        },
+                        AttackMove::Circle {
+                            sides: 16,
+                            rotation: 12.,
+                            rotation_per_fire: 6.,
+                            setup: BulletSetup(Sprite::new_from_index(0, 1)),
+                            cooldown: Cooldown::new(1.),
+                        },
+                    ]),
+                ),
+                BossMove::new(
+                    12.,
+                    12.,
+                    AttackMove::Multiple(vec![AttackMove::AtPlayer {
+                        num: 5,
+                        speed: 0.5,
+                        spread: 20.,
+                        total_shoot: 2,
+                        cooldown: Cooldown::new(1.),
+                        setup: BulletSetup(Sprite::new_from_index(0, 1)),
+                    }]),
+                ),
             ]),
             Hitbox::new(0.05),
-            Hitpoint::new(10.),
+            Hitpoint::invulnerable(),
             Cooldown::new(1.),
         );
     }
@@ -45,7 +63,7 @@ pub fn create_boss(
     sprite: Sprite,
     movement: MoveParams,
     moves: Moves,
-    attack_move: AttackMove,
+    attack_move: BossMoves,
     hitbox: Hitbox,
     hitpoint: Hitpoint,
     cooldown: Cooldown,
@@ -58,6 +76,7 @@ pub fn create_boss(
         hitbox,
         movement,
         attack_move,
+        AttackMove::Multiple(vec![]),
         moves,
         hitpoint,
         cooldown,
