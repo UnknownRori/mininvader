@@ -62,6 +62,7 @@ impl Game {
         self.fps.update();
         self.spawner.update(&mut self.world, delta);
         player_controls(&mut self.world, &self.controls);
+        update_boss_move(&mut self.world);
         update_moves(&self.world);
         update_movement(&self.world);
         fire_bullets(&mut self.world);

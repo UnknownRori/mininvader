@@ -122,11 +122,47 @@ pub fn update_movement(world: &World) {
 }
 
 pub fn update_boss_move(world: &mut World) {
-    for (id, (_, _, boss)) in world.query::<(&Boss, &Enemy, &mut BossMoves)>().iter() {
-        if let Some(attack) = boss.0.front() {
-            //
+    let players = world
+        .query::<(&Player, &Controllable, &Transform2D, &Hitbox)>()
+        .iter()
+        .map(|(id, (_, _, transform, hitbox))| (id.clone(), transform.clone(), hitbox.clone()))
+        .collect::<Vec<_>>();
+
+    let mut boss = world
+        .query::<(&Boss, &Enemy, &Transform2D, &BossMoves)>()
+        .iter()
+        .map(|(id, (_, _, transform, boss))| {
+            (
+                id.clone(),
+                transform.clone(),
+                match boss.0.front() {
+                    Some(attack) => Some(attack.clone()),
+                    None => None,
+                },
+            )
+        })
+        .collect::<Vec<_>>();
+
+    boss.iter_mut().for_each(|(id, transform, boss)| {
+        if let Some(ref mut attack) = boss {
+            if let Some(player) = players.first() {
+                handle_fire_bullet(world, &id, &attack.attack, transform, &player.1);
+
+                update_cooldown_attack(&mut attack.attack);
+                let mut boss_move = world.get::<&mut BossMoves>(*id).unwrap();
+                *boss_move.0.front_mut().unwrap() = attack.clone();
+            }
+
+            // TODO : Test this thing
+            let mut collection_attack_ref = world.get::<&mut BossMoves>(*id).unwrap();
+            let attack_ref = collection_attack_ref.0.front_mut().unwrap();
+            attack_ref.timeout.update();
+
+            if attack_ref.timeout.completed() {
+                collection_attack_ref.0.pop_front();
+            }
         }
-    }
+    })
 }
 
 pub fn collision(world: &mut World) {
@@ -214,23 +250,13 @@ pub fn fire_bullets(world: &mut World) {
         .collect::<Vec<_>>();
 
     if let Some(player) = player.first() {
-        for attack_move in pending {
-            handle_fire_bullet(
-                world,
-                &attack_move.0,
-                &attack_move.1,
-                &attack_move.2,
-                player,
-            );
+        for (id, mut attack_move, transform) in pending {
+            handle_fire_bullet(world, &id, &attack_move, &transform, player);
 
-            update_cooldown_attack_world(&attack_move.0, world);
+            update_cooldown_attack(&mut attack_move);
+            *(world.get::<&mut AttackMove>(id).unwrap()) = attack_move;
         }
     }
-}
-
-fn update_cooldown_attack_world(id: &Entity, world: &World) {
-    let mut attack_move = world.get::<&mut AttackMove>(*id).unwrap();
-    update_cooldown_attack(&mut *attack_move)
 }
 
 fn update_cooldown_attack(attack: &mut AttackMove) {
@@ -263,12 +289,6 @@ fn handle_fire_bullet(
                 return;
             }
 
-            {
-                let mut total_shoot_ref = world.get::<&mut AttackMove>(*id).unwrap();
-                if let AttackMove::AtPlayer { total_shoot, .. } = &mut *total_shoot_ref {
-                    *total_shoot -= 1;
-                }
-            }
             if *num > 1 {
                 for i in 0..*num as i32 {
                     let angle = (i - 1) as f32 * spread;
