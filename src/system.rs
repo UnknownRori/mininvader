@@ -155,11 +155,31 @@ pub fn update_boss_move(world: &mut World) {
 
             // TODO : Test this thing
             let mut collection_attack_ref = world.get::<&mut BossMoves>(*id).unwrap();
+
+            {
+                let mut boss_hp = world.get::<&mut Hitpoint>(*id).unwrap();
+                if boss_hp.invulnerable {
+                    let hp = collection_attack_ref
+                        .0
+                        .front()
+                        .map(|a| Hitpoint::new(a.hp))
+                        .unwrap_or(Hitpoint::invulnerable());
+                    *boss_hp = hp
+                }
+            }
+
             let attack_ref = collection_attack_ref.0.front_mut().unwrap();
             attack_ref.timeout.update();
 
             if attack_ref.timeout.completed() {
                 collection_attack_ref.0.pop_front();
+                let mut boss_hp = world.get::<&mut Hitpoint>(*id).unwrap();
+                let hp = collection_attack_ref
+                    .0
+                    .front()
+                    .map(|a| Hitpoint::new(a.hp))
+                    .unwrap_or(Hitpoint::invulnerable());
+                *boss_hp = hp
             }
         }
     })
@@ -192,6 +212,12 @@ pub fn collision(world: &mut World) {
         .map(|(id, (_, _, transform, hitbox))| (id.clone(), transform.clone(), hitbox.clone()))
         .collect::<Vec<_>>();
 
+    let boss = world
+        .query::<(&Boss, &Enemy, &Transform2D, &Hitbox)>()
+        .iter()
+        .map(|(id, (_, _, transform, hitbox))| (id.clone(), transform.clone(), hitbox.clone()))
+        .collect::<Vec<_>>();
+
     {
         if let Some(player) = players.first() {
             for enemy_bullet in enemy_bullets {
@@ -201,6 +227,36 @@ pub fn collision(world: &mut World) {
                 {
                     let _ = world.despawn(enemy_bullet.0);
                     // TODO : Reduce Player life
+                }
+            }
+        }
+    }
+
+    {
+        for player_bullet in &player_bullets {
+            for boss in &boss {
+                if player_bullet
+                    .2
+                    .is_intersect(&player_bullet.1, &boss.1, &boss.2)
+                {
+                    let _ = world.despawn(player_bullet.0);
+
+                    // TODO : Make the damage based on bullet type
+                    match world.satisfies::<&Hitpoint>(boss.0) {
+                        Ok(exist) if exist => {
+                            world.get::<&mut Hitpoint>(boss.0).unwrap().damage(0.5);
+                        }
+                        _ => {}
+                    };
+
+                    let despawn = match world.get::<&Hitpoint>(boss.0) {
+                        Ok(hitpoint) if hitpoint.is_dead() => true,
+                        _ => false,
+                    };
+
+                    if despawn {
+                        let _ = world.despawn(boss.0);
+                    }
                 }
             }
         }
