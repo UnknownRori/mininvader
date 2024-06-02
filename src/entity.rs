@@ -1,5 +1,6 @@
 use crate::cmpx;
 use crate::components::*;
+use crate::konst::VIRTUAL_STAGE_ASPECT_RATIO;
 use crate::math::*;
 use crate::time::Timer;
 use crate::vec2;
@@ -17,7 +18,7 @@ pub fn create_boss_1() -> impl FnOnce(&mut World) {
             Moves::new(vec![]),
             BossMoves::new(vec![
                 BossMove::new(
-                    12.,
+                    2.,
                     12.,
                     AttackMove::Multiple(vec![
                         AttackMove::AtPlayer {
@@ -50,7 +51,7 @@ pub fn create_boss_1() -> impl FnOnce(&mut World) {
                     }]),
                 ),
             ]),
-            Hitbox::new(0.05),
+            Hitbox::new(0.05 * VIRTUAL_STAGE_ASPECT_RATIO),
             Hitpoint::invulnerable(),
             Cooldown::new(1.),
         );
@@ -104,7 +105,7 @@ pub fn create_red_alien_wait(transform: Complex<f32>) -> impl FnOnce(&mut World)
                 setup: BulletSetup(Sprite::new_from_index(0, 1)),
                 cooldown: Cooldown::new(1.),
             },
-            Hitbox::new(0.03),
+            Hitbox::new(0.03 * VIRTUAL_STAGE_ASPECT_RATIO),
             Hitpoint::new(2.),
         );
     }
@@ -129,7 +130,7 @@ pub fn create_red_alien(transform: Complex<f32>) -> impl FnOnce(&mut World) {
                 setup: BulletSetup(Sprite::new_from_index(1, 1)),
                 cooldown: Cooldown::new(1.),
             },
-            Hitbox::new(0.03),
+            Hitbox::new(0.03 * VIRTUAL_STAGE_ASPECT_RATIO),
             Hitpoint::new(2.),
         );
     }
@@ -187,7 +188,7 @@ pub fn create_player_generic_bullet(pos: Complex<f32>) -> impl FnOnce(&mut World
             },
             Sprite::new_from_index(0, 1),
             MoveParams::move_linear(cmpx!(0., -2.0)),
-            Hitbox::new(0.01),
+            Hitbox::new(0.01 * VIRTUAL_STAGE_ASPECT_RATIO),
         )
     }
 }
@@ -220,7 +221,7 @@ pub fn create_player(world: &mut World) {
         Transform2D::new(offset, vec2!(0.1), 0.),
         MoveParams::move_dampen(cmpx!(0.), 0.85),
         Cooldown(Timer::new(0.1, true)),
-        Hitbox::new(0.0125),
+        Hitbox::new(0.0125 * VIRTUAL_STAGE_ASPECT_RATIO),
     ));
 }
 
@@ -231,8 +232,8 @@ pub fn stage_text(text: &str) -> impl FnOnce(&mut World) {
         world.spawn((
             DieOffScreen,
             Transform2D::new(cmpx!(0.5, 0.3), vec2!(0.05), 0.),
-            Text(text),
-            MoveParams::move_accelerated(cmpx!(0.), cmpx!(0., -0.1)),
+            Text::Center(text),
+            // MoveParams::move_accelerated(cmpx!(0.), cmpx!(0., -0.1)),
         ));
     }
 }

@@ -1,8 +1,10 @@
 use macroquad::prelude::*;
 
 use crate::{
-    components::Transform2D,
-    konst::{DESIRED_ASPECT_RATIO, VIRTUAL_STAGE_HEIGHT, VIRTUAL_STAGE_WIDTH},
+    components::{Text, Transform2D},
+    konst::{
+        DESIRED_ASPECT_RATIO, VIRTUAL_STAGE_ASPECT_RATIO, VIRTUAL_STAGE_HEIGHT, VIRTUAL_STAGE_WIDTH,
+    },
     resources::Resources,
     utils::{get_adjusted_screen, FPSCounter},
     vec2,
@@ -26,7 +28,7 @@ impl Default for Renderer {
 impl Renderer {
     pub fn draw_sprite(&self, sprite: &Texture2D, rect: Rect, transform: &Transform2D) {
         set_camera(&self.game);
-        let half_scale = *transform.scale() / 2.;
+        let half_scale = (*transform.scale() * VIRTUAL_STAGE_ASPECT_RATIO) / 2.;
 
         draw_texture_ex(
             sprite,
@@ -35,7 +37,7 @@ impl Renderer {
             WHITE,
             DrawTextureParams {
                 source: Some(rect),
-                dest_size: Some(*transform.scale()),
+                dest_size: Some(*transform.scale() * VIRTUAL_STAGE_ASPECT_RATIO),
                 rotation: -*transform.rotation(), // Not sure why it need to be negative
                 ..Default::default()
             },
@@ -43,23 +45,43 @@ impl Renderer {
         set_default_camera();
     }
 
-    pub fn draw_text(&self, text: &str, font: &Font, transform: &Transform2D) {
+    pub fn draw_text(&self, text: &Text, font: &Font, transform: &Transform2D) {
         set_camera(&self.game);
         let (font_size, font_scale, font_scale_aspect) = camera_font_scale(transform.scale.x);
-        let dimension = measure_text(text, Some(font), font_size, font_scale);
-        draw_text_ex(
-            text,
-            transform.position.re - dimension.width / 2.5,
-            transform.position.im,
-            TextParams {
-                font: Some(font),
-                font_size,
-                font_scale,
-                font_scale_aspect,
-                rotation: 0.,
-                color: WHITE,
-            },
-        );
+        match text {
+            Text::Left(text) => {
+                draw_text_ex(
+                    text,
+                    transform.position.re,
+                    transform.position.im,
+                    TextParams {
+                        font: Some(font),
+                        font_size,
+                        font_scale,
+                        font_scale_aspect,
+                        rotation: 0.,
+                        color: WHITE,
+                    },
+                );
+            }
+            Text::Center(text) => {
+                let dimension = measure_text(text.as_ref(), Some(font), font_size, font_scale);
+                draw_text_ex(
+                    text,
+                    transform.position.re - dimension.width / 3.5,
+                    transform.position.im,
+                    TextParams {
+                        font: Some(font),
+                        font_size,
+                        font_scale,
+                        font_scale_aspect,
+                        rotation: 0.,
+                        color: WHITE,
+                    },
+                );
+            }
+            Text::Right(_text) => unimplemented!("I'm lazy implementing text right"),
+        }
         set_default_camera();
     }
 
@@ -96,7 +118,7 @@ impl Renderer {
 
         let width = screen_width();
         let height = screen_height();
-        let adjusted = get_adjusted_screen(DESIRED_ASPECT_RATIO);
+        let adjusted = get_adjusted_screen(VIRTUAL_STAGE_ASPECT_RATIO);
         let offset = vec2((width - adjusted.x) / 2f32, (height - adjusted.y) / 2f32);
         let texture = &self.game.render_target.as_ref().unwrap().texture;
         clear_background(Color::new(0.2, 0.2, 0.2, 1.));

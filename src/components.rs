@@ -9,13 +9,28 @@ pub struct Player;
 pub struct Controllable;
 pub struct Enemy;
 pub struct Boss;
-pub struct Text(pub String);
 pub struct Bullet;
 pub struct DieOffScreen;
 #[derive(Debug, Clone)]
 pub struct BeenOnScreen(pub bool);
 #[derive(Debug, Clone)]
 pub struct Cooldown(pub Timer);
+
+pub enum Text {
+    Left(String),
+    Center(String),
+    Right(String),
+}
+
+impl AsRef<str> for Text {
+    fn as_ref(&self) -> &str {
+        match self {
+            Text::Left(str) => str,
+            Text::Center(str) => str,
+            Text::Right(str) => str,
+        }
+    }
+}
 
 impl Cooldown {
     pub fn new(time: f32) -> Self {

@@ -43,7 +43,7 @@ pub fn draw_text_system(world: &World, resources: &Resources, renderer: &Rendere
     world
         .query::<(&Text, &Transform2D)>()
         .iter()
-        .for_each(|(_, (text, transform))| renderer.draw_text(&text.0, &resources.font, transform))
+        .for_each(|(_, (text, transform))| renderer.draw_text(&text, &resources.font, transform))
 }
 
 pub fn player_controls(world: &mut World, controls: &Controls) {
