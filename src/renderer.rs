@@ -112,7 +112,8 @@ impl Renderer {
 
     pub fn finalize(&self, fps: &FPSCounter, resources: &Resources) {
         // set_camera(&self.game);
-        // fps.draw(&resources.font, vec2!(1.), 0.045);
+        // let re = Rect::new(0.02, 0.02, 0.9, 0.45);
+        // draw_rectangle(re.x, re.y, re.w, re.h, Color::new(1., 0., 0., 0.5));
         //
         // set_default_camera();
 

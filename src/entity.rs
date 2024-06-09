@@ -1,9 +1,8 @@
 use crate::cmpx;
 use crate::components::*;
 use crate::konst::VIRTUAL_STAGE_ASPECT_RATIO;
-use crate::math::*;
-use crate::time::Timer;
 use crate::vec2;
+use crate::{rect, time::Timer};
 use hecs::World;
 use macroquad::prelude::*;
 use num_complex::Complex;
@@ -14,8 +13,14 @@ pub fn create_boss_1() -> impl FnOnce(&mut World) {
             world,
             Transform2D::new(cmpx!(0.5, -0.02), vec2!(0.1), 0.),
             Sprite::new_from_index(2, 0),
-            MoveParams::move_linear(cmpx!(0., 0.1)),
-            Moves::new(vec![]),
+            MoveParams::move_linear(cmpx!(0., 0.2)),
+            Moves::new(vec![
+                Movement::new(0.1, Move::MoveDampen(cmpx!(0., 0.8), 0.6)),
+                Movement::new(
+                    50.,
+                    Move::MoveWanderLinear(rect!(0.02, 0.02, 0.9, 0.45), 0.2, 1.),
+                ),
+            ]),
             BossMoves::new(vec![
                 BossMove::new(
                     2.,
@@ -82,6 +87,7 @@ pub fn create_boss(
         hitpoint,
         cooldown,
         HealthBar(Rect::new(0.04, 0.02, 0.9, 0.01)),
+        Wanderable::new(transform.position),
     ));
 }
 

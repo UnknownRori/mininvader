@@ -19,5 +19,5 @@ pub fn stage_1(spawner: &mut Spawner) {
         spawner.spawn(start, create_red_alien(cmpx!(0.8, -0.02)));
     }
 
-    spawner.spawn(14., create_boss_1());
+    spawner.spawn(1., create_boss_1());
 }

@@ -28,6 +28,19 @@ macro_rules! vec2 {
     };
 }
 
+#[macro_export]
+macro_rules! rect {
+    ($xy:expr, $size:expr) => {
+        macroquad::math::Rect::new($xy, $xy, $size, $size)
+    };
+    ($x:expr, $y:expr, $width:expr, $height:expr) => {
+        macroquad::math::Rect::new($x, $y, $width, $height)
+    };
+    (($re:expr, $im:expr)) => {
+        num_complex::Complex::new($re, $im)
+    };
+}
+
 pub trait CartesianExt {
     type Output;
 

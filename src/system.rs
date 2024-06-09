@@ -106,10 +106,15 @@ pub fn player_controls(world: &mut World, controls: &Controls) {
 }
 pub fn update_moves(world: &World) {
     world
-        .query::<(&mut Moves, &mut MoveParams, &Transform2D)>()
+        .query::<(
+            &mut Moves,
+            &mut MoveParams,
+            Option<&mut Wanderable>,
+            &Transform2D,
+        )>()
         .iter()
-        .for_each(|(_, (moves, move_params, position))| {
-            *move_params = moves.update(&move_params, position);
+        .for_each(|(_, (moves, move_params, wanderable, position))| {
+            *move_params = moves.update(&move_params, position, wanderable);
         });
 }
 pub fn update_movement(world: &World) {

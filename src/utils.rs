@@ -58,6 +58,10 @@ pub fn rand_dir() -> Vec2 {
     vec2(rand::gen_range(-1., 1.), rand::gen_range(-1., 1.)).normalize()
 }
 
+pub fn rand_vec2(min: f32, max: f32) -> Vec2 {
+    vec2(rand::gen_range(min, max), rand::gen_range(min, max)).normalize()
+}
+
 #[inline(always)]
 pub fn get_adjusted_screen(aspect_ratio: f32) -> Vec2 {
     let (width, height, actual_aspect_ratio) = {

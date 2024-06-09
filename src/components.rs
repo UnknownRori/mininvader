@@ -3,7 +3,13 @@ use std::collections::VecDeque;
 use macroquad::prelude::*;
 use num_complex::Complex;
 
-use crate::{math::ToVec2 as _, time::Timer};
+use crate::{
+    cmpx,
+    math::{ComplexExt, ToComplex, ToVec2 as _},
+    time::Timer,
+    utils::rand_vec2,
+    vec2,
+};
 
 pub struct Player;
 pub struct Controllable;
@@ -15,6 +21,20 @@ pub struct DieOffScreen;
 pub struct BeenOnScreen(pub bool);
 #[derive(Debug, Clone)]
 pub struct Cooldown(pub Timer);
+
+pub struct Wanderable {
+    last_position: Complex<f32>,
+    target_position: Option<Complex<f32>>,
+}
+
+impl Wanderable {
+    pub fn new(start_position: Complex<f32>) -> Self {
+        Self {
+            last_position: start_position,
+            target_position: None,
+        }
+    }
+}
 
 pub enum Text {
     Left(String),
@@ -87,7 +107,12 @@ impl Moves {
         Self(vec.into())
     }
 
-    pub fn update(&mut self, move_params: &MoveParams, position: &Transform2D) -> MoveParams {
+    pub fn update(
+        &mut self,
+        move_params: &MoveParams,
+        position: &Transform2D,
+        wanderable: Option<&mut Wanderable>,
+    ) -> MoveParams {
         if let Some(current) = self.0.front_mut() {
             current.timer.update();
 
@@ -124,6 +149,52 @@ impl Moves {
                     }
                     Move::MoveAccelerated2(accel) => {
                         MoveParams::move_accelerated(move_params.velocity, accel)
+                    }
+                    Move::MoveWanderLinear(zone, velocity, wait) => {
+                        let wanderable =
+                            wanderable.expect("You should put Wanderable tag on the entity");
+
+                        if wanderable.target_position.is_none() {
+                            let mut tried = 8;
+                            let mut new_target = rand_vec2(0., 1.);
+                            while tried > 0 {
+                                tried -= 1;
+
+                                new_target = rand_vec2(0., 1.);
+                                let x = zone.x + new_target.x * zone.w;
+                                let y = zone.y + new_target.y * zone.h;
+                                new_target = vec2!(x, y);
+
+                                if new_target.distance_squared(position.position.to_vec2()) > 1.0 {
+                                    break;
+                                }
+                            }
+
+                            println!("{}", &new_target);
+
+                            wanderable.target_position = Some(new_target.to_cmpx());
+
+                            return MoveParams::move_linear(cmpx!(0.));
+                        }
+
+                        let vel =
+                            position.position.dir(&wanderable.target_position.unwrap()) * velocity;
+                        let move_params = MoveParams::move_towards(
+                            vel,
+                            wanderable.target_position.unwrap(),
+                            cmpx!(0.),
+                        );
+
+                        if wanderable
+                            .target_position
+                            .unwrap()
+                            .distance_squared(&position.position)
+                            < 0.05
+                        {
+                            wanderable.target_position = None;
+                        }
+
+                        move_params
                     }
                 };
             }
@@ -196,6 +267,7 @@ pub enum Move {
     MoveAccelerated2(Complex<f32>),
     MoveDampen(Complex<f32>, f32),
     MoveDampenRetention(f32),
+    MoveWanderLinear(Rect, f32, f32),
 }
 
 #[derive(Debug, Clone, Copy, Default)]
